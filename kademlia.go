@@ -34,46 +34,55 @@ func (n node) new() node {
 }
 
 func main() {
+	tests()
 	// let's generate some nodes
 	var neighborhood [10]node
 	for i := 0; i < 10; i++ {
 		n := node{}
 		neighborhood[i] = n.new()
 	}
-	fmt.Println(neighborhood)
-
-	var f uint8 = 0x01
-	var bucket_indx_map [8]uint8
-	for i := 0; i < 7; f = f << 1 {
-		i += 1
-		fmt.Printf("%8b\n", f)
-		bucket_indx_map[i] = f
-	}
-	fmt.Println(bucket_indx_map)
 
 	var m []byte = neighborhood[0].nodeid
 	var n []byte = neighborhood[2].nodeid
-	fmt.Println(kxor(m, n))
-	// for i := 1; i < 10; i++ {
-	// 	m[i]
-	// }
+	fmt.Println("m,n,kxor", m, n, kxor(m, n))
 }
 
-func kxor(m []byte, n []byte) (kbucket_indx uint8, place uint8) {
-	fmt.Println(m, n)
-	fmt.Println(len(m), len(n))
-	for i := 0; i < len(m); i++ {
-		o := m[i]
-		y := n[i]
-		// fmt.Println("o:", o)
-		// for j := 0; j < len(n); j++ {
-		// y := n[j]
-		// fmt.Println("y:", y)
-		xr := o ^ y
-		if xr > 0 {
-			fmt.Println(xr)
+// kxor returns p, the place of the binary digit where their nodeids differ
+// node m files node n into place p of its kbucket array
+func kxor(m []byte, n []byte) (kbucket_indx int) {
+	var address_section int
+	var xored uint8
+	for address_section = 0; address_section < len(m); address_section++ {
+		o := m[address_section]
+		y := n[address_section]
+		xored = o ^ y
+		if xored > 0 {
+			break
 		}
-		// }
 	}
-	return 0, 0
+
+	var f uint8 = 0x01
+	var place int
+	for place = 0; place < 7; f = f << 1 {
+		// "Sieve" thing to get the bit # of first differing bit
+		fmt.Println("xored,f", xored, f)
+		if xored < f {
+			place -= 1 // Went too far, shift back one
+			break
+		}
+		place += 1
+	}
+
+	fmt.Println("address_section, place", address_section, place)
+	kbucket_indx = address_section*8 + place
+	return kbucket_indx
+}
+
+func tests() {
+	var m []byte = []byte{1, 1, 3, 4}
+	var n []byte = []byte{1, 2, 3, 4}
+	fmt.Println("__TEST KXOR__:", "m: ", m, "n: ", n, kxor(m, n))
+	var o []byte = []byte{2, 1, 3, 4}
+	var p []byte = []byte{4, 2, 3, 4}
+	fmt.Println("__TEST KXOR__:", "o: ", o, "p: ", p, kxor(o, p))
 }
