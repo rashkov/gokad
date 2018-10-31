@@ -13,13 +13,13 @@ import (
 // N is the address space in bits
 // K is the max length of a k-bucket
 // A is the # of simultaneous async requests to send
-var N int = 8
-var K int = 10
+var N int = 32
+var K int = 20
 var A int = 3
 
 type node struct {
-	nodeid  []byte
-	kbucket [][]byte
+	nodeid   []byte
+	kbuckets [][][]byte
 }
 
 func (n node) new() node {
@@ -30,11 +30,21 @@ func (n node) new() node {
 	c = byte(rand.Intn(math.MaxUint8))
 	d = byte(rand.Intn(math.MaxUint8))
 	n.nodeid = []byte{a, b, c, d}
+	n.kbuckets = make([][][]byte, N)
 	return n
 }
 
+func (self node) kbucket_insert(neighbor_nodeid []byte) bool {
+	kbucket := self.kbuckets[kxor(self.nodeid, neighbor_nodeid)]
+	fmt.Println(len(kbucket), cap(kbucket))
+	for i := 0; i < len(kbucket); i++ {
+		fmt.Println(kbucket[i])
+	}
+	return true
+}
+
 func main() {
-	tests()
+	//tests()
 	// let's generate some nodes
 	var neighborhood [10]node
 	for i := 0; i < 10; i++ {
@@ -42,9 +52,11 @@ func main() {
 		neighborhood[i] = n.new()
 	}
 
-	// var m []byte = neighborhood[0].nodeid
-	// var n []byte = neighborhood[2].nodeid
-	//fmt.Println("m,n,kxor", m, n, kxor(m, n))
+	var m node = neighborhood[0]
+	var n node = neighborhood[1]
+	//fmt.Println("m,n,kxor", m, n, kxor(m.nodeid, n.nodeid))
+	// Bootstrap m
+	m.kbucket_insert(n.nodeid)
 }
 
 // kxor returns p, the place of the binary digit where their nodeids differ
