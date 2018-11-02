@@ -51,10 +51,41 @@ func (self node) kbucket_insert(neighbor_nodeid address) bool {
 }
 
 func (self node) find_node(target_nodeid address) bool {
-	distance_to_target := kxor(self.nodeid, target_nodeid)
-	//foo []address := self.get_nearest_to(target_nodeid)
-	fmt.Println(distance_to_target)
+	fmt.Println(self.get_k_nearest(target_nodeid))
 	return true
+}
+
+func (self node) get_k_nearest(target_nodeid address) []address {
+	var k_nearest []address
+	distance_to_target := kxor(self.nodeid, target_nodeid) + 1
+	index := distance_to_target
+	lower_bound := distance_to_target - 1
+	upper_bound := distance_to_target + 1
+
+	for _, b := range self.kbuckets[index] {
+		if b != nil {
+			k_nearest = append(k_nearest, b)
+		}
+	}
+	for len(k_nearest) < 20 && (lower_bound >= 0 || upper_bound <= 19) {
+		if lower_bound >= 0 {
+			for _, b := range self.kbuckets[lower_bound] {
+				if b != nil && len(k_nearest) < 20 {
+					k_nearest = append(k_nearest, b)
+				}
+			}
+		}
+		if upper_bound < 20 {
+			for _, b := range self.kbuckets[upper_bound] {
+				if b != nil && len(k_nearest) < 20 {
+					k_nearest = append(k_nearest, b)
+				}
+			}
+		}
+		lower_bound--
+		upper_bound++
+	}
+	return k_nearest
 }
 
 func main() {
@@ -70,7 +101,8 @@ func main() {
 	var n node = neighborhood[1]
 	// Bootstrap m
 	m.kbucket_insert(n.nodeid)
-	m.find_node(m.nodeid) // have m search for itself
+	n.kbucket_insert(m.nodeid)
+	n.find_node(m.nodeid) // have m search for itself
 }
 
 // kxor returns p, the place of the binary digit where their nodeids differ
