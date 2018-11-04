@@ -33,6 +33,7 @@ func (n node) new() node {
 	d = byte(rand.Intn(math.MaxUint8))
 	n.nodeid = address{a, b, c, d}
 	n.kbuckets = make([][]address, N)
+	fmt.Println("printed from A", n.nodeid)
 	return n
 }
 
@@ -93,8 +94,26 @@ func main() {
 	// let's generate some nodes
 	var neighborhood [10]node
 	for i := 0; i < 10; i++ {
-		n := node{}
-		neighborhood[i] = n.new()
+
+		// TODO: Figure out why the following weirdness happens.
+		//       Probably has to do with lexical scope / closure
+		// NOTE: When done this way, output looks like this
+		// printed from A [86 132 122 254]
+		// printed from B []
+		// printed from A [151 153 115 155]
+		// printed from B []
+		// n := node{}
+		// neighborhood[i] = n.new()
+
+		// NOTE: When done this way, output looks like this:
+		// printed from A [86 132 122 254]
+		// printed from B [86 132 122 254]
+		// printed from A [151 153 115 155]
+		// printed from B [151 153 115 155]
+		n := node{}.new()
+		neighborhood[i] = n
+
+		fmt.Println("printed from B", n.nodeid)
 	}
 
 	var m node = neighborhood[0]
